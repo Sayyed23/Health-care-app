@@ -7,6 +7,8 @@ import {
   ListChecks,
   BookText,
   Sparkles,
+  Utensils, // New icon
+  Bed,      // New icon
 } from 'lucide-react';
 
 export interface NavItem {
@@ -23,7 +25,9 @@ export const APP_LOGO_ICON = Sparkles;
 export const NAV_ITEMS: NavItem[] = [
   { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { title: 'Mood Tracker', href: '/mood-tracker', icon: Smile },
+  { title: 'Meal Log', href: '/meal-log', icon: Utensils }, // New NavItem
   { title: 'Water Intake', href: '/water-intake', icon: Droplet },
+  { title: 'Sleep Tracker', href: '/sleep-tracker', icon: Bed }, // New NavItem
   { title: 'Breathing Exercise', href: '/breathing-exercise', icon: Wind },
   { title: 'Fitness Checklist', href: '/fitness-checklist', icon: ListChecks },
   { title: 'Mood Journal', href: '/mood-journal', icon: BookText },

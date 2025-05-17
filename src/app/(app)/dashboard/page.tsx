@@ -2,16 +2,29 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
-import { Activity, Droplet, Smile, BookText, ListChecks, Wind } from "lucide-react";
+import { Activity, Droplet, Smile, BookText, ListChecks, Wind, Utensils, Bed } from "lucide-react"; // Added Utensils, Bed
 
 export default function DashboardPage() {
   const quickAccessItems = [
     { title: "Log Mood", href: "/mood-tracker", icon: Smile, description: "Record how you're feeling today." },
+    { title: "Log Meal", href: "/meal-log", icon: Utensils, description: "Track your daily calorie intake." },
     { title: "Add Water", href: "/water-intake", icon: Droplet, description: "Track your daily hydration." },
+    { title: "Track Sleep", href: "/sleep-tracker", icon: Bed, description: "Log your sleep hours." },
     { title: "Start Breathing", href: "/breathing-exercise", icon: Wind, description: "Relax with a guided session." },
     { title: "Plan Fitness", href: "/fitness-checklist", icon: ListChecks, description: "Check off your workout." },
     { title: "Write Journal", href: "/mood-journal", icon: BookText, description: "Reflect on your day." },
   ];
+
+  // Ordered list for dashboard display
+   const orderedQuickAccessItems = [
+    quickAccessItems.find(item => item.title === "Log Mood"),
+    quickAccessItems.find(item => item.title === "Log Meal"),
+    quickAccessItems.find(item => item.title === "Add Water"),
+    quickAccessItems.find(item => item.title === "Track Sleep"),
+    quickAccessItems.find(item => item.title === "Start Breathing"),
+    quickAccessItems.find(item => item.title === "Plan Fitness"),
+    quickAccessItems.find(item => item.title === "Write Journal"),
+  ].filter(Boolean) as typeof quickAccessItems;
 
   return (
     <div className="space-y-6">
@@ -22,7 +35,7 @@ export default function DashboardPage() {
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {quickAccessItems.map((item) => (
+            {orderedQuickAccessItems.map((item) => (
               <Link href={item.href} key={item.title} passHref>
                 <Card className="hover:shadow-md transition-shadow h-full flex flex-col">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
