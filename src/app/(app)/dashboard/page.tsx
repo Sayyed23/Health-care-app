@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
-import { Activity, Droplet, Smile, BookText, ListChecks, Wind, Utensils, Bed, PersonStanding } from "lucide-react"; // Added PersonStanding
+import { Activity, Droplet, Smile, BookText, ListChecks, Wind, Utensils, Bed, PersonStanding, Scale } from "lucide-react"; // Added Scale
 
 export default function DashboardPage() {
   const quickAccessItems = [
@@ -10,6 +10,7 @@ export default function DashboardPage() {
     { title: "Log Meal", href: "/meal-log", icon: Utensils, description: "Track your daily calorie intake." },
     { title: "Add Water", href: "/water-intake", icon: Droplet, description: "Track your daily hydration." },
     { title: "Track Sleep", href: "/sleep-tracker", icon: Bed, description: "Log your sleep hours." },
+    { title: "Track Weight", href: "/weight-tracker", icon: Scale, description: "Log your weight and see trends." },
     { title: "Start Breathing", href: "/breathing-exercise", icon: Wind, description: "Relax with a guided session." },
     { title: "Plan Fitness", href: "/fitness-checklist", icon: ListChecks, description: "Check off your workout." },
     { title: "Stretch Routine", href: "/stretch-routine", icon: PersonStanding, description: "Follow a guided stretch sequence." },
@@ -22,6 +23,7 @@ export default function DashboardPage() {
     quickAccessItems.find(item => item.title === "Log Meal"),
     quickAccessItems.find(item => item.title === "Add Water"),
     quickAccessItems.find(item => item.title === "Track Sleep"),
+    quickAccessItems.find(item => item.title === "Track Weight"),
     quickAccessItems.find(item => item.title === "Start Breathing"),
     quickAccessItems.find(item => item.title === "Plan Fitness"),
     quickAccessItems.find(item => item.title === "Stretch Routine"),

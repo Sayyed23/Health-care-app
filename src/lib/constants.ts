@@ -9,7 +9,8 @@ import {
   Sparkles,
   Utensils,
   Bed,
-  PersonStanding, // Added icon for stretch routine
+  PersonStanding,
+  Scale, // Added Scale icon
 } from 'lucide-react';
 
 export interface NavItem {
@@ -29,9 +30,10 @@ export const NAV_ITEMS: NavItem[] = [
   { title: 'Meal Log', href: '/meal-log', icon: Utensils },
   { title: 'Water Intake', href: '/water-intake', icon: Droplet },
   { title: 'Sleep Tracker', href: '/sleep-tracker', icon: Bed },
+  { title: 'Weight Tracker', href: '/weight-tracker', icon: Scale }, // New NavItem for Weight Tracker
   { title: 'Breathing Exercise', href: '/breathing-exercise', icon: Wind },
   { title: 'Fitness Checklist', href: '/fitness-checklist', icon: ListChecks },
-  { title: 'Stretch Routine', href: '/stretch-routine', icon: PersonStanding }, // New NavItem
+  { title: 'Stretch Routine', href: '/stretch-routine', icon: PersonStanding },
   { title: 'Mood Journal', href: '/mood-journal', icon: BookText },
 ];
 
