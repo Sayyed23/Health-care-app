@@ -28,7 +28,17 @@ const GenerateDietSuggestionsOutputSchema = z.object({
 export type GenerateDietSuggestionsOutput = z.infer<typeof GenerateDietSuggestionsOutputSchema>;
 
 export async function generateDietSuggestions(input: GenerateDietSuggestionsInput): Promise<GenerateDietSuggestionsOutput> {
-  return generateDietSuggestionsFlow(input);
+  try {
+    return await generateDietSuggestionsFlow(input);
+  } catch (error) {
+    console.error('[AI Flow Error - generateDietSuggestions]:', error); // Detailed log on the server
+    if (error instanceof Error) {
+      // Re-throw the error to be caught by the client, potentially with a modified message
+      // Or, if certain errors are expected (e.g. auth), you could throw a custom error type/message
+      throw new Error(`Failed to generate diet suggestions: ${error.message}`);
+    }
+    throw new Error('An unexpected error occurred while generating AI-powered diet suggestions.');
+  }
 }
 
 const prompt = ai.definePrompt({
@@ -81,7 +91,7 @@ const generateDietSuggestionsFlow = ai.defineFlow(
   async (input) => {
     const {output} = await prompt(input);
     if (!output) {
-        throw new Error("AI failed to generate suggestions.");
+        throw new Error("AI failed to generate suggestions. The output from the model was empty.");
     }
     return output;
   }
