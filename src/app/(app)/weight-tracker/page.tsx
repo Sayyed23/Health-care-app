@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
-import { Scale, PlusCircle, Trash2, Calculator, Sparkles, Lightbulb, User } from 'lucide-react'; // Added User for age
+import { Scale, PlusCircle, Trash2, Calculator, Sparkles, Lightbulb, User, RefreshCw } from 'lucide-react'; // Added RefreshCw
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -118,6 +118,7 @@ export default function WeightTrackerPage() {
       updatedLog = [...weightLog, newEntry];
       toast({ title: "Weight Logged!", description: `${data.weight} kg logged for ${format(parseISO(entryDateStr), 'MMM d, yyyy')}.` });
     }
+    // Sort by date ascending for chart consistency
     setWeightLog(updatedLog.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
     setValue("weight", undefined);
     setBmi(null);
@@ -191,7 +192,8 @@ export default function WeightTrackerPage() {
       date: format(parseISO(entry.date), 'MMM d'),
       weight: entry.weight,
       fullDate: entry.date,
-    })).sort((a,b) => new Date(a.fullDate).getTime() - new Date(b.fullDate).getTime());
+    }));
+    // No need to sort here if weightLog is already sorted on update/add
   }, [weightLog]);
   
   const latestWeightForBmi = weightLog.length > 0 ? weightLog[weightLog.length-1].weight : null;
@@ -397,3 +399,4 @@ export default function WeightTrackerPage() {
     </div>
   );
 }
+
