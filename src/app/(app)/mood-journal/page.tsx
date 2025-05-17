@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -43,7 +44,7 @@ export default function MoodJournalPage() {
   const [isLoadingChart, setIsLoadingChart] = useState(false);
   const { toast } = useToast();
 
-  const { control, handleSubmit, register, reset, formState: { errors } } = useForm<JournalEntryFormData>({
+  const { control, handleSubmit, register, reset, formState: { errors }, setValue, watch } = useForm<JournalEntryFormData>({
     resolver: zodResolver(journalEntrySchema),
     defaultValues: {
       date: format(new Date(), 'yyyy-MM-dd'),
@@ -146,9 +147,9 @@ export default function MoodJournalPage() {
                     size="sm" 
                     className="text-xs h-6 px-1.5 py-0.5"
                     onClick={() => {
-                      const currentTags = control._getWatch('tags') || "";
-                      const newTags = currentTags ? `${currentTags}, ${tag}` : tag;
-                      control._setValue('tags', newTags);
+                      const currentTags = watch('tags') || "";
+                      const newTags = currentTags ? `${currentTags.split(',').map(t => t.trim()).filter(Boolean).includes(tag) ? currentTags : `${currentTags}, ${tag}`}` : tag;
+                      setValue('tags', newTags.split(',').map(t => t.trim()).filter(Boolean).join(', '));
                     }}
                   >
                     {tag}
