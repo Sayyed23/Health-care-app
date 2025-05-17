@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -7,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
-import { ListChecks, PlusCircle, Trash2, Timer, Play, Pause } from 'lucide-react';
+import { ListChecks, PlusCircle, Trash2, Timer, Play, Pause, AlarmClock } from 'lucide-react'; // Added AlarmClock
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 interface Exercise {
@@ -141,6 +142,15 @@ export default function FitnessChecklistPage() {
 
   return (
     <div className="space-y-6">
+      <style jsx global>{`
+        @keyframes subtlePulse {
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.7; transform: scale(1.05); }
+        }
+        .animate-subtle-pulse {
+          animation: subtlePulse 1.5s ease-in-out infinite;
+        }
+      `}</style>
       <PageHeader title="Fitness Checklist" description="Create and manage your fitness routines. Stay on track with integrated timers." icon={ListChecks} />
 
       <Card>
@@ -166,8 +176,11 @@ export default function FitnessChecklistPage() {
                   <label htmlFor={`ex-${ex.id}`} className={`font-medium ${ex.completed ? 'line-through text-muted-foreground' : ''}`}>
                     {ex.name}
                   </label>
-                  <p className="text-sm text-muted-foreground">
-                    Duration: {formatTime(ex.duration)} | Time Left: {formatTime(ex.timeLeft)}
+                  <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+                    {ex.timerRunning && ex.timeLeft > 0 && (
+                      <AlarmClock className="h-4 w-4 text-primary animate-subtle-pulse" />
+                    )}
+                    <span>Duration: {formatTime(ex.duration)} | Time Left: {formatTime(ex.timeLeft)}</span>
                   </p>
                 </div>
                 <Button variant="ghost" size="icon" onClick={() => toggleTimer(ex.id)} disabled={ex.completed || ex.timeLeft === 0 && !ex.timerRunning}>
