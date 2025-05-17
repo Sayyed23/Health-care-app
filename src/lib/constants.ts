@@ -7,15 +7,16 @@ import {
   ListChecks,
   BookText,
   Sparkles,
-  Utensils, // New icon
-  Bed,      // New icon
+  Utensils,
+  Bed,
+  PersonStanding, // Added icon for stretch routine
 } from 'lucide-react';
 
 export interface NavItem {
   title: string;
   href: string;
   icon: LucideIcon;
-  color?: string; 
+  color?: string;
   disabled?: boolean;
 }
 
@@ -25,11 +26,12 @@ export const APP_LOGO_ICON = Sparkles;
 export const NAV_ITEMS: NavItem[] = [
   { title: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { title: 'Mood Tracker', href: '/mood-tracker', icon: Smile },
-  { title: 'Meal Log', href: '/meal-log', icon: Utensils }, // New NavItem
+  { title: 'Meal Log', href: '/meal-log', icon: Utensils },
   { title: 'Water Intake', href: '/water-intake', icon: Droplet },
-  { title: 'Sleep Tracker', href: '/sleep-tracker', icon: Bed }, // New NavItem
+  { title: 'Sleep Tracker', href: '/sleep-tracker', icon: Bed },
   { title: 'Breathing Exercise', href: '/breathing-exercise', icon: Wind },
   { title: 'Fitness Checklist', href: '/fitness-checklist', icon: ListChecks },
+  { title: 'Stretch Routine', href: '/stretch-routine', icon: PersonStanding }, // New NavItem
   { title: 'Mood Journal', href: '/mood-journal', icon: BookText },
 ];
 

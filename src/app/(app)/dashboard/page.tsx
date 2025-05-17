@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
-import { Activity, Droplet, Smile, BookText, ListChecks, Wind, Utensils, Bed } from "lucide-react"; // Added Utensils, Bed
+import { Activity, Droplet, Smile, BookText, ListChecks, Wind, Utensils, Bed, PersonStanding } from "lucide-react"; // Added PersonStanding
 
 export default function DashboardPage() {
   const quickAccessItems = [
@@ -12,6 +12,7 @@ export default function DashboardPage() {
     { title: "Track Sleep", href: "/sleep-tracker", icon: Bed, description: "Log your sleep hours." },
     { title: "Start Breathing", href: "/breathing-exercise", icon: Wind, description: "Relax with a guided session." },
     { title: "Plan Fitness", href: "/fitness-checklist", icon: ListChecks, description: "Check off your workout." },
+    { title: "Stretch Routine", href: "/stretch-routine", icon: PersonStanding, description: "Follow a guided stretch sequence." },
     { title: "Write Journal", href: "/mood-journal", icon: BookText, description: "Reflect on your day." },
   ];
 
@@ -23,6 +24,7 @@ export default function DashboardPage() {
     quickAccessItems.find(item => item.title === "Track Sleep"),
     quickAccessItems.find(item => item.title === "Start Breathing"),
     quickAccessItems.find(item => item.title === "Plan Fitness"),
+    quickAccessItems.find(item => item.title === "Stretch Routine"),
     quickAccessItems.find(item => item.title === "Write Journal"),
   ].filter(Boolean) as typeof quickAccessItems;
 
