@@ -95,15 +95,16 @@ export default function WeightTrackerPage() {
   };
 
   const weightChartData: WeightChartDataPoint[] = useMemo(() => {
-    return weightLog.map(entry => ({
-      date: format(parseISO(entry.date), 'MMM d'),
-      weight: entry.weight,
-      fullDate: entry.date,
-    }));
+    // Ensure weightLog is sorted by date for the chart data
+    const sortedLog = [...weightLog].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    return sortedLog.map(entry => {
+      return {
+        date: format(parseISO(entry.date), 'MMM d'),
+        weight: entry.weight,
+        fullDate: entry.date,
+      };
+    });
   }, [weightLog]);
-
-  // Ensuring a very clear separation before return
-  ;
 
   return (
     <div className="space-y-6">
@@ -168,7 +169,7 @@ export default function WeightTrackerPage() {
               </div>
             ) : (
               <p className="text-center text-muted-foreground h-[300px] flex items-center justify-center">
-                {weightChartData.length <=1 ? "Log at least two weight entries to see your trend graph." : "Log some weight entries to see your chart."}
+                {weightLog.length <=1 ? "Log at least two weight entries to see your trend graph." : "Log some weight entries to see your chart."}
               </p>
             )}
           </CardContent>
@@ -181,7 +182,7 @@ export default function WeightTrackerPage() {
            <CardDescription>Review and manage your past weight entries, sorted by most recent.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
-          {weightLog.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(entry => (
+          {weightLog.slice().sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()).map(entry => (
             <Card key={entry.id} className="p-3 flex justify-between items-center group">
               <div>
                 <p className="font-medium">{format(parseISO(entry.date), 'MMMM d, yyyy')}</p>
@@ -214,3 +215,4 @@ export default function WeightTrackerPage() {
   );
 }
 
+    
