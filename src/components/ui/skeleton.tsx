@@ -1,3 +1,4 @@
+
 import { cn } from "@/lib/utils"
 
 function Skeleton({
@@ -6,7 +7,7 @@ function Skeleton({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("animate-pulse rounded-md bg-muted", className)}
+      className={cn("animate-pulse rounded-md bg-muted/70", className)} // Adjusted opacity for better visibility on some backgrounds
       {...props}
     />
   )
