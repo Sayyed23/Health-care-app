@@ -43,7 +43,7 @@ export default function WeightTrackerPage() {
   const [selectedDateForEntry, setSelectedDateForEntry] = useState<Date | undefined>(startOfDay(new Date()));
   const { toast } = useToast();
 
-  const { handleSubmit, register, setValue, watch, formState: { errors } } = useForm<WeightEntryFormData>({
+  const { handleSubmit, register, setValue, formState: { errors } } = useForm<WeightEntryFormData>({
     resolver: zodResolver(weightEntrySchema),
     defaultValues: {
       date: format(selectedDateForEntry || new Date(), 'yyyy-MM-dd'),
@@ -95,9 +95,8 @@ export default function WeightTrackerPage() {
   };
 
   const weightChartData: WeightChartDataPoint[] = useMemo(() => {
-    return weightLog
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()) // Ensure sorted by date
-      .map(entry => ({
+    // weightLog is already sorted by date due to onSubmit logic
+    return weightLog.map(entry => ({
         date: format(parseISO(entry.date), 'MMM d'),
         weight: entry.weight,
         fullDate: entry.date,
@@ -146,7 +145,7 @@ export default function WeightTrackerPage() {
             <CardDescription>Your weight progress over time.</CardDescription>
           </CardHeader>
           <CardContent>
-            {weightChartData.length > 1 ? ( // Need at least 2 points for a line
+            {weightChartData.length > 1 ? ( 
               <div className="h-[300px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={weightChartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
