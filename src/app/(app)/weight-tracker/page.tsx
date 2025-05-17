@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
-import { Scale, PlusCircle, Trash2, Calculator, Sparkles, Lightbulb, User, RefreshCw } from 'lucide-react'; // Added RefreshCw
+import { Scale, PlusCircle, Trash2, Calculator, Sparkles, Lightbulb, User, RefreshCw } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -33,14 +33,16 @@ interface StoredWeightEntry extends WeightEntryFormData {
 }
 
 interface WeightChartDataPoint {
-  date: string; 
+  date: string; // Formatted for XAxis label ('MMM d')
   weight: number;
-  fullDate: string; 
+  fullDate: string; // Full date string for tooltips or other logic
+  delta: number | null; // Change from previous entry
+  index: number; // Original index from the sorted log
 }
 
 const WEIGHT_LOG_STORAGE_KEY = 'weightLogEntries';
 const USER_HEIGHT_STORAGE_KEY = 'userHeightCm';
-const USER_AGE_STORAGE_KEY = 'userAgeYears'; // Key for storing age
+const USER_AGE_STORAGE_KEY = 'userAgeYears';
 
 export default function WeightTrackerPage() {
   const [weightLog, setWeightLog] = useState<StoredWeightEntry[]>([]);
@@ -48,12 +50,11 @@ export default function WeightTrackerPage() {
   const { toast } = useToast();
 
   const [userHeightCm, setUserHeightCm] = useState<number | undefined>(undefined);
-  const [userAge, setUserAge] = useState<number | undefined>(undefined); // State for user's age
+  const [userAge, setUserAge] = useState<number | undefined>(undefined);
   const [bmi, setBmi] = useState<number | null>(null);
   const [bmiCategory, setBmiCategory] = useState<string | null>(null);
   const [dietSuggestions, setDietSuggestions] = useState<GenerateDietSuggestionsOutput | null>(null);
   const [isFetchingSuggestions, setIsFetchingSuggestions] = useState(false);
-
 
   const { handleSubmit, register, setValue, formState: { errors } } = useForm<WeightEntryFormData>({
     resolver: zodResolver(weightEntrySchema),
@@ -76,13 +77,14 @@ export default function WeightTrackerPage() {
     const storedLog = localStorage.getItem(WEIGHT_LOG_STORAGE_KEY);
     if (storedLog) {
       const parsedLog: StoredWeightEntry[] = JSON.parse(storedLog);
-      setWeightLog(parsedLog.map(entry => ({...entry, date: format(parseISO(entry.date), 'yyyy-MM-dd')})));
+      // Ensure dates are consistently formatted and log is sorted for chart
+      setWeightLog(parsedLog.map(entry => ({...entry, date: format(parseISO(entry.date), 'yyyy-MM-dd')})).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
     }
     const storedHeight = localStorage.getItem(USER_HEIGHT_STORAGE_KEY);
     if (storedHeight) {
       setUserHeightCm(parseFloat(storedHeight));
     }
-    const storedAge = localStorage.getItem(USER_AGE_STORAGE_KEY); // Load age
+    const storedAge = localStorage.getItem(USER_AGE_STORAGE_KEY);
     if (storedAge) {
       setUserAge(parseInt(storedAge, 10));
     }
@@ -98,7 +100,7 @@ export default function WeightTrackerPage() {
     }
   }, [userHeightCm]);
 
-  useEffect(() => { // Save age to local storage
+  useEffect(() => {
     if (userAge !== undefined) {
       localStorage.setItem(USER_AGE_STORAGE_KEY, userAge.toString());
     }
@@ -118,7 +120,6 @@ export default function WeightTrackerPage() {
       updatedLog = [...weightLog, newEntry];
       toast({ title: "Weight Logged!", description: `${data.weight} kg logged for ${format(parseISO(entryDateStr), 'MMM d, yyyy')}.` });
     }
-    // Sort by date ascending for chart consistency
     setWeightLog(updatedLog.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
     setValue("weight", undefined);
     setBmi(null);
@@ -145,7 +146,7 @@ export default function WeightTrackerPage() {
       toast({ title: "Height Required", description: "Please enter your height to calculate BMI.", variant: "destructive" });
       return;
     }
-    if (!userAge || userAge <= 0) { // Check for age
+    if (!userAge || userAge <= 0) {
       toast({ title: "Age Required", description: "Please enter your age for personalized suggestions.", variant: "destructive" });
       return;
     }
@@ -154,9 +155,7 @@ export default function WeightTrackerPage() {
       return;
     }
 
-    const latestWeightEntry = weightLog.reduce((latest, entry) => 
-        new Date(latest.date) > new Date(entry.date) ? latest : entry
-    );
+    const latestWeightEntry = weightLog[weightLog.length -1]; // weightLog is sorted chronologically
     
     const heightInMeters = userHeightCm / 100;
     const calculatedBmi = parseFloat((latestWeightEntry.weight / (heightInMeters * heightInMeters)).toFixed(1));
@@ -173,7 +172,7 @@ export default function WeightTrackerPage() {
         bmiCategory: category,
         currentWeightKg: latestWeightEntry.weight,
         heightCm: userHeightCm,
-        age: userAge, // Pass age to the flow
+        age: userAge,
       };
       const suggestions = await generateDietSuggestions(input);
       setDietSuggestions(suggestions);
@@ -188,15 +187,41 @@ export default function WeightTrackerPage() {
   };
 
   const weightChartData: WeightChartDataPoint[] = useMemo(() => {
-    return weightLog.map(entry => ({
-      date: format(parseISO(entry.date), 'MMM d'),
-      weight: entry.weight,
-      fullDate: entry.date,
-    }));
-    // No need to sort here if weightLog is already sorted on update/add
+    // weightLog is already sorted chronologically
+    return weightLog.map((entry, index, arr) => {
+      const prevWeight = index > 0 ? arr[index - 1].weight : null;
+      const delta = prevWeight !== null ? parseFloat((entry.weight - prevWeight).toFixed(1)) : null;
+      return {
+        date: format(parseISO(entry.date), 'MMM d'), // For XAxis
+        weight: entry.weight,
+        fullDate: entry.date, // For tooltip
+        delta: delta,
+        index: index,
+      };
+    });
   }, [weightLog]);
   
   const latestWeightForBmi = weightLog.length > 0 ? weightLog[weightLog.length-1].weight : null;
+
+  // Custom Tooltip for Recharts
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0].payload as WeightChartDataPoint; // Access the full data point
+      return (
+        <div className="p-2 bg-background shadow-lg rounded-md border border-border text-sm">
+          <p className="label font-semibold mb-1">{`${format(parseISO(data.fullDate), 'MMMM d, yyyy')}`}</p>
+          <p className="intro text-primary">{`Weight: ${data.weight.toFixed(1)} kg`}</p>
+          {data.index > 0 && data.delta !== null && (
+            <p className={`mt-1 ${data.delta > 0 ? 'text-destructive' : data.delta < 0 ? 'text-green-600' : 'text-muted-foreground'}`}>
+              {data.delta === 0 ? "No change" : `Change: ${data.delta > 0 ? '+' : ''}${data.delta.toFixed(1)} kg`}
+            </p>
+          )}
+        </div>
+      );
+    }
+    return null;
+  };
+
 
   return (
     <div className="space-y-6">
@@ -238,7 +263,7 @@ export default function WeightTrackerPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2"><Calculator className="h-6 w-6 text-primary"/>BMI & Diet Helper</CardTitle>
-              <CardDescription>Enter height & age for BMI & AI suggestions. Latest weight: ({latestWeightForBmi ? `${latestWeightForBmi} kg` : "N/A"}).</CardDescription>
+              <CardDescription>Enter height & age for BMI & AI suggestions. Latest weight: ({latestWeightForBmi ? `${latestWeightForBmi.toFixed(1)} kg` : "N/A"}).</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -325,7 +350,7 @@ export default function WeightTrackerPage() {
           <Card>
             <CardHeader>
               <CardTitle>Weight Trend</CardTitle>
-              <CardDescription>Your weight progress over time.</CardDescription>
+              <CardDescription>Visualize your weight changes (increase or decrease) with this trend graph.</CardDescription>
             </CardHeader>
             <CardContent>
               {weightChartData.length > 1 ? ( 
@@ -335,13 +360,7 @@ export default function WeightTrackerPage() {
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="date" />
                       <YAxis allowDecimals={true} domain={['auto', 'auto']} />
-                      <Tooltip 
-                        formatter={(value: number) => [`${value} kg`, "Weight"]}
-                        labelFormatter={(label: string) => {
-                          const point = weightChartData.find(d => d.date === label);
-                          return point ? format(parseISO(point.fullDate), 'MMMM d, yyyy') : label;
-                        }}
-                      />
+                      <Tooltip content={<CustomTooltip />} />
                       <Legend />
                       <Line type="monotone" dataKey="weight" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} name="Weight (kg)" />
                     </LineChart>
@@ -366,7 +385,7 @@ export default function WeightTrackerPage() {
                   <Card key={entry.id} className="p-3 flex justify-between items-center group">
                     <div>
                       <p className="font-medium">{format(parseISO(entry.date), 'MMMM d, yyyy')}</p>
-                      <p className="text-sm text-primary">{entry.weight} kg</p>
+                      <p className="text-sm text-primary">{entry.weight.toFixed(1)} kg</p>
                     </div>
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
@@ -399,4 +418,3 @@ export default function WeightTrackerPage() {
     </div>
   );
 }
-
