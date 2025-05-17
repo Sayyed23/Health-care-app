@@ -50,7 +50,7 @@ export default function WeightTrackerPage() {
       weight: undefined,
     },
   });
-  
+
   useEffect(() => {
     if (selectedDateForEntry) {
       const dateStr = format(selectedDateForEntry, 'yyyy-MM-dd');
@@ -86,7 +86,7 @@ export default function WeightTrackerPage() {
       setWeightLog(prev => [...prev, newEntry].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
       toast({ title: "Weight Logged!", description: `${data.weight} kg logged for ${format(parseISO(entryDateStr), 'MMM d, yyyy')}.` });
     }
-    setValue("weight", undefined); 
+    setValue("weight", undefined);
   };
   
   const deleteEntry = (id: string) => {
@@ -95,13 +95,15 @@ export default function WeightTrackerPage() {
   };
 
   const weightChartData: WeightChartDataPoint[] = useMemo(() => {
-    // weightLog is already sorted by date due to onSubmit logic
     return weightLog.map(entry => ({
-        date: format(parseISO(entry.date), 'MMM d'),
-        weight: entry.weight,
-        fullDate: entry.date,
-      }));
+      date: format(parseISO(entry.date), 'MMM d'),
+      weight: entry.weight,
+      fullDate: entry.date,
+    }));
   }, [weightLog]);
+
+  // Ensuring a very clear separation before return
+  ;
 
   return (
     <div className="space-y-6">
@@ -151,7 +153,7 @@ export default function WeightTrackerPage() {
                   <LineChart data={weightChartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="date" />
-                    <YAxis allowDecimals={true} domain={['dataMin - 2', 'dataMax + 2']} />
+                    <YAxis allowDecimals={true} domain={['auto', 'auto']} />
                     <Tooltip 
                       formatter={(value: number) => [`${value} kg`, "Weight"]}
                       labelFormatter={(label: string) => {
@@ -211,3 +213,4 @@ export default function WeightTrackerPage() {
     </div>
   );
 }
+
