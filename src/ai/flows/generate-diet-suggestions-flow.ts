@@ -1,7 +1,7 @@
 
 'use server';
 /**
- * @fileOverview Generates diet and lifestyle suggestions based on BMI and user metrics.
+ * @fileOverview Generates diet and lifestyle suggestions based on BMI, age, and user metrics.
  *
  * - generateDietSuggestions - A function that generates diet and lifestyle advice.
  * - GenerateDietSuggestionsInput - The input type for the generateDietSuggestions function.
@@ -16,13 +16,14 @@ const GenerateDietSuggestionsInputSchema = z.object({
   bmiCategory: z.string().describe('The BMI category (e.g., "Underweight", "Normal weight", "Overweight", "Obesity Class I/II/III").'),
   currentWeightKg: z.number().describe('The current weight of the user in kilograms.'),
   heightCm: z.number().describe('The height of the user in centimeters.'),
+  age: z.number().int().min(1, "Age must be a positive number.").max(120, "Age seems unrealistic.").describe('The age of the user in years.'),
 });
 export type GenerateDietSuggestionsInput = z.infer<typeof GenerateDietSuggestionsInputSchema>;
 
 const GenerateDietSuggestionsOutputSchema = z.object({
   mainSuggestion: z.string().describe('A brief, encouraging summary statement or main piece of advice.'),
-  dietTips: z.array(z.string()).describe('A list of general, actionable diet tips relevant to the user\'s BMI category and goals (e.g., achieving a healthier weight).'),
-  lifestyleRecommendations: z.array(z.string()).describe('A list of general lifestyle recommendations (e.g., exercise, sleep, stress management).'),
+  dietTips: z.array(z.string()).describe('A list of general, actionable diet tips relevant to the user\'s BMI category, age, and goals (e.g., achieving a healthier weight).'),
+  lifestyleRecommendations: z.array(z.string()).describe('A list of general lifestyle recommendations (e.g., exercise, sleep, stress management), considering age appropriateness.'),
 });
 export type GenerateDietSuggestionsOutput = z.infer<typeof GenerateDietSuggestionsOutputSchema>;
 
@@ -35,7 +36,7 @@ const prompt = ai.definePrompt({
   input: {schema: GenerateDietSuggestionsInputSchema},
   output: {schema: GenerateDietSuggestionsOutputSchema},
   prompt: `You are a helpful AI assistant providing general health and wellness advice.
-  A user has provided their BMI and related information. Your goal is to provide safe, general, and actionable diet and lifestyle suggestions to help them work towards or maintain a healthier weight.
+  A user has provided their BMI and related information, including their age. Your goal is to provide safe, general, and actionable diet and lifestyle suggestions to help them work towards or maintain a healthier weight.
   Do NOT provide specific medical advice or create detailed meal plans. Focus on general principles of healthy eating and living.
   Keep suggestions positive and encouraging.
 
@@ -44,22 +45,25 @@ const prompt = ai.definePrompt({
   - BMI Category: "{{bmiCategory}}"
   - Current Weight: {{currentWeightKg}} kg
   - Height: {{heightCm}} cm
+  - Age: {{age}} years
 
   Based on this information, please provide:
   1. A 'mainSuggestion': A brief, encouraging summary statement or main piece of advice.
   2. A list of 'dietTips': 3-5 general, actionable diet tips. Examples: "Focus on whole foods like fruits, vegetables, and lean proteins." or "Try to reduce intake of sugary drinks and processed snacks."
   3. A list of 'lifestyleRecommendations': 2-3 general lifestyle recommendations. Examples: "Aim for at least 30 minutes of moderate exercise most days of the week." or "Ensure you are getting 7-9 hours of quality sleep per night."
 
-  Tailor the tone and focus of the suggestions appropriately for the user's BMI category.
+  Tailor the tone and focus of the suggestions appropriately for the user's BMI category AND AGE.
   For example:
-  - If "Underweight", suggest healthy ways to gain weight.
-  - If "Overweight" or "Obese", suggest healthy ways to lose or manage weight.
-  - If "Normal weight", suggest ways to maintain a healthy lifestyle.
+  - If "Underweight", suggest healthy ways to gain weight, considering age-specific nutritional needs (e.g., higher protein for older adults if appropriate, or calorie-dense foods for younger active individuals).
+  - If "Overweight" or "Obese", suggest healthy ways to lose or manage weight, factoring in age-appropriate activity levels and potential metabolic changes.
+  - If "Normal weight", suggest ways to maintain a healthy lifestyle, adapting for different age groups (e.g., bone health for older adults, sustained energy for active adults, healthy growth for adolescents if applicable within a general context).
+  - Consider common nutritional concerns or recommendations for different age brackets (e.g., calcium and vitamin D for older adults, iron for young women) if relevant to general wellness, but always keep it general.
+  - Ensure exercise recommendations are suitable for the given age (e.g. low-impact for older adults if appropriate, varied activities for younger people).
 
   Output the response in the specified JSON format.
   `,
   config: {
-    safetySettings: [ // Adjusted safety settings to be less restrictive for general health advice
+    safetySettings: [
       { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
       { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
       { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
@@ -75,8 +79,6 @@ const generateDietSuggestionsFlow = ai.defineFlow(
     outputSchema: GenerateDietSuggestionsOutputSchema,
   },
   async (input) => {
-    // Potentially add more logic here before calling the prompt if needed,
-    // e.g., fetching more context or validating inputs further.
     const {output} = await prompt(input);
     if (!output) {
         throw new Error("AI failed to generate suggestions.");

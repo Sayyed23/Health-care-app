@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Calendar } from '@/components/ui/calendar';
-import { Scale, PlusCircle, Trash2, Calculator, Sparkles, Lightbulb } from 'lucide-react'; // Added Calculator, Sparkles, Lightbulb
+import { Scale, PlusCircle, Trash2, Calculator, Sparkles, Lightbulb, User } from 'lucide-react'; // Added User for age
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -40,6 +40,7 @@ interface WeightChartDataPoint {
 
 const WEIGHT_LOG_STORAGE_KEY = 'weightLogEntries';
 const USER_HEIGHT_STORAGE_KEY = 'userHeightCm';
+const USER_AGE_STORAGE_KEY = 'userAgeYears'; // Key for storing age
 
 export default function WeightTrackerPage() {
   const [weightLog, setWeightLog] = useState<StoredWeightEntry[]>([]);
@@ -47,6 +48,7 @@ export default function WeightTrackerPage() {
   const { toast } = useToast();
 
   const [userHeightCm, setUserHeightCm] = useState<number | undefined>(undefined);
+  const [userAge, setUserAge] = useState<number | undefined>(undefined); // State for user's age
   const [bmi, setBmi] = useState<number | null>(null);
   const [bmiCategory, setBmiCategory] = useState<string | null>(null);
   const [dietSuggestions, setDietSuggestions] = useState<GenerateDietSuggestionsOutput | null>(null);
@@ -80,6 +82,10 @@ export default function WeightTrackerPage() {
     if (storedHeight) {
       setUserHeightCm(parseFloat(storedHeight));
     }
+    const storedAge = localStorage.getItem(USER_AGE_STORAGE_KEY); // Load age
+    if (storedAge) {
+      setUserAge(parseInt(storedAge, 10));
+    }
   }, []);
 
   useEffect(() => {
@@ -91,6 +97,12 @@ export default function WeightTrackerPage() {
       localStorage.setItem(USER_HEIGHT_STORAGE_KEY, userHeightCm.toString());
     }
   }, [userHeightCm]);
+
+  useEffect(() => { // Save age to local storage
+    if (userAge !== undefined) {
+      localStorage.setItem(USER_AGE_STORAGE_KEY, userAge.toString());
+    }
+  }, [userAge]);
 
   const onSubmit = (data: WeightEntryFormData) => {
     const entryDateStr = format(parseISO(data.date), 'yyyy-MM-dd');
@@ -108,7 +120,6 @@ export default function WeightTrackerPage() {
     }
     setWeightLog(updatedLog.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()));
     setValue("weight", undefined);
-    // After adding/updating weight, clear old BMI/suggestions as they might be outdated
     setBmi(null);
     setBmiCategory(null);
     setDietSuggestions(null);
@@ -133,6 +144,10 @@ export default function WeightTrackerPage() {
       toast({ title: "Height Required", description: "Please enter your height to calculate BMI.", variant: "destructive" });
       return;
     }
+    if (!userAge || userAge <= 0) { // Check for age
+      toast({ title: "Age Required", description: "Please enter your age for personalized suggestions.", variant: "destructive" });
+      return;
+    }
     if (weightLog.length === 0) {
       toast({ title: "Weight Log Required", description: "Please log your weight first to calculate BMI.", variant: "destructive" });
       return;
@@ -148,7 +163,7 @@ export default function WeightTrackerPage() {
 
     setBmi(calculatedBmi);
     setBmiCategory(category);
-    setDietSuggestions(null); // Clear previous suggestions
+    setDietSuggestions(null); 
     setIsFetchingSuggestions(true);
 
     try {
@@ -157,6 +172,7 @@ export default function WeightTrackerPage() {
         bmiCategory: category,
         currentWeightKg: latestWeightEntry.weight,
         heightCm: userHeightCm,
+        age: userAge, // Pass age to the flow
       };
       const suggestions = await generateDietSuggestions(input);
       setDietSuggestions(suggestions);
@@ -164,7 +180,7 @@ export default function WeightTrackerPage() {
     } catch (error) {
       console.error("Error generating diet suggestions:", error);
       toast({ title: "Suggestion Error", description: (error instanceof Error ? error.message : "Could not fetch suggestions."), variant: "destructive" });
-      setDietSuggestions({mainSuggestion: "Could not load suggestions.", dietTips:[], lifestyleRecommendations:[]}); // Show error state
+      setDietSuggestions({mainSuggestion: "Could not load suggestions.", dietTips:[], lifestyleRecommendations:[]});
     } finally {
       setIsFetchingSuggestions(false);
     }
@@ -182,15 +198,14 @@ export default function WeightTrackerPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Weight Tracker" description="Log your weight (kg), calculate BMI, and get diet suggestions." icon={Scale} />
+      <PageHeader title="Weight Tracker" description="Log weight (kg), calculate BMI, enter age for AI diet suggestions." icon={Scale} />
       
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Column 1: Log Weight & BMI/Diet Helper */}
         <div className="lg:col-span-1 space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Log Your Weight</CardTitle>
-              <CardDescription>Select a date and enter your weight in kilograms (kg).</CardDescription>
+              <CardDescription>Select date and enter weight in kilograms (kg).</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -221,28 +236,44 @@ export default function WeightTrackerPage() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2"><Calculator className="h-6 w-6 text-primary"/>BMI & Diet Helper</CardTitle>
-              <CardDescription>Enter height to calculate BMI using your latest weight ({latestWeightForBmi ? `${latestWeightForBmi} kg` : "N/A"}).</CardDescription>
+              <CardDescription>Enter height & age for BMI & AI suggestions. Latest weight: ({latestWeightForBmi ? `${latestWeightForBmi} kg` : "N/A"}).</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div>
-                <label htmlFor="userHeight" className="block text-sm font-medium mb-1">Your Height (cm)</label>
-                <Input 
-                  id="userHeight" 
-                  type="number" 
-                  placeholder="e.g., 170" 
-                  value={userHeightCm === undefined ? '' : userHeightCm}
-                  onChange={(e) => {
-                      const val = e.target.value;
-                      setUserHeightCm(val === '' ? undefined : parseFloat(val));
-                      setBmi(null); // Reset BMI when height changes
-                      setDietSuggestions(null);
-                  }}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="userHeight" className="block text-sm font-medium mb-1">Height (cm)</label>
+                  <Input 
+                    id="userHeight" 
+                    type="number" 
+                    placeholder="e.g., 170" 
+                    value={userHeightCm === undefined ? '' : userHeightCm}
+                    onChange={(e) => {
+                        const val = e.target.value;
+                        setUserHeightCm(val === '' ? undefined : parseFloat(val));
+                        setBmi(null); 
+                        setDietSuggestions(null);
+                    }}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="userAge" className="block text-sm font-medium mb-1">Age (years)</label>
+                  <Input 
+                    id="userAge" 
+                    type="number" 
+                    placeholder="e.g., 30" 
+                    value={userAge === undefined ? '' : userAge}
+                    onChange={(e) => {
+                        const val = e.target.value;
+                        setUserAge(val === '' ? undefined : parseInt(val, 10));
+                        setDietSuggestions(null);
+                    }}
+                  />
+                </div>
               </div>
               <Button 
                 onClick={handleCalculateBmiAndSuggest} 
                 className="w-full gap-2"
-                disabled={userHeightCm === undefined || userHeightCm <=0 || weightLog.length === 0 || isFetchingSuggestions}
+                disabled={userHeightCm === undefined || userHeightCm <=0 || userAge === undefined || userAge <= 0 || weightLog.length === 0 || isFetchingSuggestions}
               >
                 {isFetchingSuggestions ? <RefreshCw className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}
                 {isFetchingSuggestions ? "Getting Info..." : "Calculate BMI & Get Suggestions"}
@@ -288,7 +319,6 @@ export default function WeightTrackerPage() {
           </Card>
         </div>
 
-        {/* Column 2: Weight Trend & History */}
         <div className="lg:col-span-2 space-y-6">
           <Card>
             <CardHeader>
